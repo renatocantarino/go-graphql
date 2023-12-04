@@ -6,14 +6,12 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/renatocantarino/go-graphql/graph/model"
 )
 
 // Courses is the resolver for the courses field.
 func (r *categoryResolver) Courses(ctx context.Context, obj *model.Category) ([]*model.Course, error) {
-
 	courses, err := r.CourseDB.FindByCategoryId(obj.ID)
 	if err != nil {
 		panic(err)
@@ -29,6 +27,21 @@ func (r *categoryResolver) Courses(ctx context.Context, obj *model.Category) ([]
 	}
 
 	return courseModel, nil
+}
+
+// Category is the resolver for the category field.
+func (r *courseResolver) Category(ctx context.Context, obj *model.Course) (*model.Category, error) {
+
+	category, err := r.CategoryDB.FindByCourseId(obj.ID)
+	if err != nil {
+		panic(err)
+	}
+
+	return &model.Category{
+		ID:          category.ID,
+		Name:        category.Name,
+		Description: &category.Description,
+	}, nil
 
 }
 
@@ -81,11 +94,28 @@ func (r *queryResolver) Categories(ctx context.Context) ([]*model.Category, erro
 
 // Courses is the resolver for the courses field.
 func (r *queryResolver) Courses(ctx context.Context) ([]*model.Course, error) {
-	panic(fmt.Errorf("not implemented: Courses - courses"))
+	courses, err := r.CategoryDB.FindAll()
+	if err != nil {
+		panic(err)
+	}
+
+	var courseModel []*model.Course
+	for _, item := range courses {
+		courseModel = append(courseModel, &model.Course{
+			ID:          item.ID,
+			Name:        item.Name,
+			Description: &item.Description,
+		})
+	}
+
+	return courseModel, nil
 }
 
 // Category returns CategoryResolver implementation.
 func (r *Resolver) Category() CategoryResolver { return &categoryResolver{r} }
+
+// Course returns CourseResolver implementation.
+func (r *Resolver) Course() CourseResolver { return &courseResolver{r} }
 
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
@@ -94,5 +124,6 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type categoryResolver struct{ *Resolver }
+type courseResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
