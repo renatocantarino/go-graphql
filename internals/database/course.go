@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -29,5 +30,46 @@ func (c *Course) Create(name, description, categoryID string) (Course, error) {
 	}
 
 	return Course{ID: id, Name: name, Description: description, CategoryID: categoryID}, nil
+
+}
+
+func (c *Course) FindByCategoryId(categoryID string) ([]Course, error) {
+
+	query := fmt.Sprintf("SELECT id, name, description , category_id from courses where category_id = '%s'", categoryID)
+	return c.findBuilder(query)
+
+}
+
+func (c *Course) findBuilder(query string) ([]Course, error) {
+	rows, err := c.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	courses := []Course{}
+	for rows.Next() {
+		var id, name, description, categoryId string
+		if err := rows.Scan(&id, &name, &description, &categoryId); err != nil {
+			return nil, err
+		}
+
+		courses = append(courses, Course{
+			ID:          id,
+			Name:        name,
+			Description: description,
+		})
+
+		return courses, nil
+	}
+	return courses, nil
+
+}
+
+func (c *Course) FindAll() ([]Course, error) {
+
+	query := "SELECT id, name, description from courses"
+	return c.findBuilder(query)
 
 }

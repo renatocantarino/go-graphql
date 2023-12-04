@@ -13,7 +13,23 @@ import (
 
 // Courses is the resolver for the courses field.
 func (r *categoryResolver) Courses(ctx context.Context, obj *model.Category) ([]*model.Course, error) {
-	panic(fmt.Errorf("not implemented: Courses - courses"))
+
+	courses, err := r.CourseDB.FindByCategoryId(obj.ID)
+	if err != nil {
+		panic(err)
+	}
+
+	var courseModel []*model.Course
+	for _, item := range courses {
+		courseModel = append(courseModel, &model.Course{
+			ID:          item.ID,
+			Name:        item.Name,
+			Description: &item.Description,
+		})
+	}
+
+	return courseModel, nil
+
 }
 
 // CreateCategory is the resolver for the createCategory field.
